@@ -2,7 +2,9 @@ from __future__ import annotations
 from typing import List, Optional, Tuple
 
 
-GOAL_STATE = (1, 2, 3, 4, 5, 6, 7, 8, 0)
+GOAL_STATE = (1, 2, 3, 
+              4, 5, 6, 
+              7, 8, 0)
 
 
 class State:
@@ -26,18 +28,38 @@ class State:
 
     def neighbors(self) -> List["State"]:
         """Retorna os estados filhos válidos a partir deste estado."""
-        # TODO: implemente a geração de estados filhos
-        raise NotImplementedError
+        neighbors: List[State] = []
+        idx = self.blank_index
+        row, col = divmod(idx, 3)
+
+        moves = [(-1, 0, "Up"), (1, 0, "Down"), (0, -1, "Left"), (0, 1, "Right")]
+        for dr, dc, action in moves:
+            new_r, new_c = row + dr, col + dc
+            if 0 <= new_r < 3 and 0 <= new_c < 3:
+                new_idx = new_r * 3 + new_c
+                tiles_list = list(self.tiles)
+                tiles_list[idx], tiles_list[new_idx] = tiles_list[new_idx], tiles_list[idx]
+                new_state = State(tuple(tiles_list), parent=self, action=action, cost=self.cost + 1)
+                neighbors.append(new_state)
+
+        return neighbors
 
     def path(self) -> List["State"]:
         """Retorna a sequência de estados do estado inicial até este."""
-        # TODO: implemente a reconstrução do caminho usando self.parent
-        raise NotImplementedError
+        node: Optional[State] = self
+        path: List[State] = []
+        while node is not None:
+            path.append(node)
+            node = node.parent
+        path.reverse()
+        return path
 
     def actions(self) -> List[str]:
         """Retorna a sequência de ações do estado inicial até este."""
-        # TODO: implemente usando path()
-        raise NotImplementedError
+        p = self.path()
+        # skip the initial state's action (None)
+        actions: List[str] = [s.action for s in p[1:] if s.action is not None]
+        return actions
 
     def __eq__(self, other: object) -> bool:
         return isinstance(other, State) and self.tiles == other.tiles
